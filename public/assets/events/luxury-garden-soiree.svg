@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
+  <defs>
+    <linearGradient id="gardenSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#022C22" />
+      <stop offset="60%" stop-color="#064E3B" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <radialGradient id="bistroWarmth" cx="50%" cy="30%" r="55%">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="0.55" />
+      <stop offset="60%" stop-color="#D4AF65" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#022C22" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="960" height="540" fill="url(#gardenSky)" />
+  <rect width="960" height="540" fill="url(#bistroWarmth)" />
+
+  <!-- Botanical Silhouettes & Cypress Foliage -->
+  <g fill="#022C22" opacity="0.65">
+    <ellipse cx="90" cy="340" rx="95" ry="160" />
+    <ellipse cx="210" cy="360" rx="85" ry="130" />
+    <ellipse cx="760" cy="360" rx="85" ry="130" />
+    <ellipse cx="870" cy="340" rx="95" ry="160" />
+  </g>
+
+  <!-- Overhead Pergola & Fairy Bistro String Lights -->
+  <path d="M 60 80 Q 480 155 900 80" fill="none" stroke="#D4AF65" stroke-width="1.8" opacity="0.8" />
+  <path d="M 60 130 Q 480 200 900 130" fill="none" stroke="#D4AF65" stroke-width="1.5" opacity="0.7" />
+
+  <g fill="#FDE68A">
+    <circle cx="150" cy="96" r="5" />
+    <circle cx="240" cy="108" r="5.5" />
+    <circle cx="330" cy="116" r="6" />
+    <circle cx="420" cy="121" r="6.5" />
+    <circle cx="480" cy="122" r="7" />
+    <circle cx="540" cy="121" r="6.5" />
+    <circle cx="630" cy="116" r="6" />
+    <circle cx="720" cy="108" r="5.5" />
+    <circle cx="810" cy="96" r="5" />
+
+    <circle cx="190" cy="148" r="4.5" />
+    <circle cx="290" cy="158" r="5" />
+    <circle cx="390" cy="165" r="5.5" />
+    <circle cx="480" cy="167" r="6" />
+    <circle cx="570" cy="165" r="5.5" />
+    <circle cx="670" cy="158" r="5" />
+    <circle cx="770" cy="148" r="4.5" />
+  </g>
+
+  <!-- Botanical Glass Conservatory Arch in Center -->
+  <path d="M 320 420 L 320 190 Q 480 90 640 190 L 640 420 Z" fill="#065F46" fill-opacity="0.55" stroke="#D4AF65" stroke-width="2.5" />
+  <line x1="480" y1="140" x2="480" y2="420" stroke="#D4AF65" stroke-width="1.5" opacity="0.5" />
+  <line x1="320" y1="280" x2="640" y2="280" stroke="#D4AF65" stroke-width="1.5" opacity="0.5" />
+
+  <!-- Long Ivory Linen Al-Fresco Banquet Table -->
+  <rect x="210" y="385" width="540" height="58" rx="10" fill="#FAF8F2" stroke="#D4AF65" stroke-width="2.5" />
+  <rect x="230" y="402" width="500" height="12" rx="4" fill="#D4AF65" fill-opacity="0.35" />
+
+  <!-- Brass Candle Lanterns & Botanical Centerpieces Along Table -->
+  <g>
+    <rect x="285" y="352" width="22" height="33" rx="4" fill="#D4AF65" />
+    <circle cx="296" cy="368" r="5" fill="#FAF8F2" />
+    <rect x="469" y="344" width="26" height="41" rx="5" fill="#D4AF65" />
+    <circle cx="482" cy="364" r="6" fill="#FAF8F2" />
+    <rect x="655" y="352" width="22" height="33" rx="4" fill="#D4AF65" />
+    <circle cx="666" cy="368" r="5" fill="#FAF8F2" />
+  </g>
+</svg>

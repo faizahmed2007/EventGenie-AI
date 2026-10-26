@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
+  <defs>
+    <linearGradient id="stageNight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#022C22" />
+      <stop offset="50%" stop-color="#064E3B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <radialGradient id="stageSpot" cx="50%" cy="38%" r="50%">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="0.6" />
+      <stop offset="55%" stop-color="#10B981" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#022C22" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="960" height="540" fill="url(#stageNight)" />
+  <rect width="960" height="540" fill="url(#stageSpot)" />
+
+  <!-- Architectural Acoustic Shell & Festival Truss -->
+  <path d="M 160 410 L 210 130 L 750 130 L 800 410 Z" fill="#064E3B" fill-opacity="0.65" stroke="#D4AF65" stroke-width="2.5" />
+  <path d="M 230 410 L 265 165 L 695 165 L 730 410 Z" fill="#022C22" fill-opacity="0.75" stroke="#10B981" stroke-width="1.5" />
+
+  <!-- Stage Spotlights Beams -->
+  <polygon points="310,165 230,410 390,410" fill="#FDE68A" fill-opacity="0.12" />
+  <polygon points="480,165 390,410 570,410" fill="#D4AF65" fill-opacity="0.18" />
+  <polygon points="650,165 570,410 730,410" fill="#FDE68A" fill-opacity="0.12" />
+
+  <!-- LED Panoramic Backdrop Screen -->
+  <rect x="295" y="210" width="370" height="145" rx="8" fill="#047857" stroke="#D4AF65" stroke-width="2" />
+  <circle cx="480" cy="282" r="44" fill="none" stroke="#FDE68A" stroke-width="2" opacity="0.8" />
+  <circle cx="480" cy="282" r="24" fill="#D4AF65" fill-opacity="0.45" />
+
+  <!-- Stage Deck & Podium -->
+  <rect x="130" y="405" width="700" height="34" rx="5" fill="#FAF8F2" stroke="#D4AF65" stroke-width="2" />
+  <rect x="160" y="439" width="640" height="22" rx="3" fill="#D4AF65" fill-opacity="0.4" />
+</svg>

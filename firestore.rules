@@ -1,0 +1,393 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isParentEventOwner(eventId) {
+      return exists(/databases/$(database)/documents/events/$(eventId)) &&
+        get(/databases/$(database)/documents/events/$(eventId)).data.ownerId == request.auth.uid;
+    }
+
+    // Validation Blueprints
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'name', 'email', 'currency', 'country', 'timezone', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'name', 'email', 'currency', 'country', 'timezone', 'createdAt', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+        data.uid == userId && data.uid == request.auth.uid &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 254 &&
+        data.currency is string && data.currency.size() <= 10 && data.currency in ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD'] &&
+        data.country is string && data.country.size() >= 1 && data.country.size() <= 80 &&
+        data.timezone is string && data.timezone.size() >= 1 && data.timezone.size() <= 80 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUserPreference(data, userId) {
+      return data.keys().hasAll(['ownerId', 'defaultStyle', 'reminderLeadDays', 'aiPrivacyConsent', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'defaultStyle', 'reminderLeadDays', 'aiPrivacyConsent', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+        data.ownerId == userId && data.ownerId == request.auth.uid &&
+        data.defaultStyle is string && data.defaultStyle.size() <= 60 &&
+        data.reminderLeadDays is number && data.reminderLeadDays >= 0 && data.reminderLeadDays <= 365 &&
+        data.aiPrivacyConsent is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidEventRecord(data) {
+      return data.keys().hasAll([
+          'ownerId', 'title', 'eventType', 'status', 'eventDate', 'city',
+          'venueName', 'venueType', 'guestCount', 'totalBudget', 'currency',
+          'workspaceJson', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'title', 'eventType', 'status', 'eventDate', 'city',
+          'venueName', 'venueType', 'guestCount', 'totalBudget', 'currency',
+          'workspaceJson', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+        data.ownerId == request.auth.uid &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+        data.eventType is string && data.eventType.size() >= 1 && data.eventType.size() <= 60 &&
+        data.status is string && data.status.size() <= 30 && data.status in ['Planning', 'In Progress', 'Ready', 'Completed', 'Archived'] &&
+        data.eventDate is string && data.eventDate.size() <= 40 &&
+        data.city is string && data.city.size() <= 120 &&
+        data.venueName is string && data.venueName.size() <= 160 &&
+        data.venueType is string && data.venueType.size() <= 20 && data.venueType in ['Indoor', 'Outdoor', 'Hybrid'] &&
+        data.guestCount is number && data.guestCount >= 0 && data.guestCount <= 100000 &&
+        data.totalBudget is number && data.totalBudget >= 0 && data.totalBudget <= 10000000000 &&
+        data.currency is string && data.currency.size() <= 10 && data.currency in ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD'] &&
+        data.workspaceJson is string && data.workspaceJson.size() <= 450000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidEventTask(data, eventId) {
+      return data.keys().hasAll(['ownerId', 'eventId', 'title', 'category', 'dueDate', 'priority', 'status', 'estimatedCost', 'notes', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'eventId', 'title', 'category', 'dueDate', 'priority', 'status', 'estimatedCost', 'notes', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.eventId is string && data.eventId.size() >= 1 && data.eventId.size() <= 128 && data.eventId == eventId &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+        data.category is string && data.category.size() <= 80 &&
+        data.dueDate is string && data.dueDate.size() <= 40 &&
+        data.priority is string && data.priority.size() <= 20 && data.priority in ['High', 'Medium', 'Low'] &&
+        data.status is string && data.status.size() <= 30 && data.status in ['Not Started', 'In Progress', 'Completed', 'Blocked', 'Cancelled'] &&
+        data.estimatedCost is number && data.estimatedCost >= 0 &&
+        data.notes is string && data.notes.size() <= 1000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidBudgetItem(data, eventId) {
+      return data.keys().hasAll(['ownerId', 'eventId', 'category', 'plannedAmount', 'quotedAmount', 'actualAmount', 'paidAmount', 'vendorName', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'eventId', 'category', 'plannedAmount', 'quotedAmount', 'actualAmount', 'paidAmount', 'vendorName', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.eventId is string && data.eventId.size() >= 1 && data.eventId.size() <= 128 && data.eventId == eventId &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 100 &&
+        data.plannedAmount is number && data.plannedAmount >= 0 &&
+        data.quotedAmount is number && data.quotedAmount >= 0 &&
+        data.actualAmount is number && data.actualAmount >= 0 &&
+        data.paidAmount is number && data.paidAmount >= 0 &&
+        data.vendorName is string && data.vendorName.size() <= 160 &&
+        data.status is string && data.status.size() <= 30 && data.status in ['Estimated', 'Quoted', 'Confirmed', 'Paid', 'Overdue'] &&
+        data.notes is string && data.notes.size() <= 1000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidVendorRecord(data, eventId) {
+      return data.keys().hasAll(['ownerId', 'eventId', 'businessName', 'category', 'contactPerson', 'phone', 'email', 'quotedAmount', 'finalPrice', 'advancePaid', 'bookingStatus', 'notes', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'eventId', 'businessName', 'category', 'contactPerson', 'phone', 'email', 'quotedAmount', 'finalPrice', 'advancePaid', 'bookingStatus', 'notes', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.eventId is string && data.eventId.size() >= 1 && data.eventId.size() <= 128 && data.eventId == eventId &&
+        data.businessName is string && data.businessName.size() >= 1 && data.businessName.size() <= 160 &&
+        data.category is string && data.category.size() <= 80 &&
+        data.contactPerson is string && data.contactPerson.size() <= 120 &&
+        data.phone is string && data.phone.size() <= 40 &&
+        data.email is string && data.email.size() <= 254 &&
+        data.quotedAmount is number && data.quotedAmount >= 0 &&
+        data.finalPrice is number && data.finalPrice >= 0 &&
+        data.advancePaid is number && data.advancePaid >= 0 &&
+        data.bookingStatus is string && data.bookingStatus.size() <= 30 && data.bookingStatus in ['Researching', 'Contacted', 'Quote Received', 'Negotiating', 'Shortlisted', 'Booked', 'Completed', 'Rejected'] &&
+        data.notes is string && data.notes.size() <= 1000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidGuestRecord(data, eventId) {
+      return data.keys().hasAll(['ownerId', 'eventId', 'fullName', 'household', 'contact', 'rsvpStatus', 'attendeeCount', 'mealPreference', 'dietaryNotes', 'seatingGroup', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'eventId', 'fullName', 'household', 'contact', 'rsvpStatus', 'attendeeCount', 'mealPreference', 'dietaryNotes', 'seatingGroup', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.eventId is string && data.eventId.size() >= 1 && data.eventId.size() <= 128 && data.eventId == eventId &&
+        data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 140 &&
+        data.household is string && data.household.size() <= 120 &&
+        data.contact is string && data.contact.size() <= 160 &&
+        data.rsvpStatus is string && data.rsvpStatus.size() <= 30 && data.rsvpStatus in ['Not Invited', 'Invited', 'Pending', 'Accepted', 'Declined', 'Waitlisted'] &&
+        data.attendeeCount is number && data.attendeeCount >= 0 && data.attendeeCount <= 50 &&
+        data.mealPreference is string && data.mealPreference.size() <= 80 &&
+        data.dietaryNotes is string && data.dietaryNotes.size() <= 500 &&
+        data.seatingGroup is string && data.seatingGroup.size() <= 80 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidThemeBoard(data, eventId) {
+      return data.keys().hasAll(['ownerId', 'eventId', 'title', 'styleCategory', 'description', 'detailsJson', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'eventId', 'title', 'styleCategory', 'description', 'detailsJson', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.eventId is string && data.eventId.size() >= 1 && data.eventId.size() <= 128 && data.eventId == eventId &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 140 &&
+        data.styleCategory is string && data.styleCategory.size() <= 30 && data.styleCategory in ['Traditional', 'Modern', 'Minimalist', 'Luxury', 'Rustic', 'Floral', 'Sustainable', 'Custom'] &&
+        data.description is string && data.description.size() <= 2000 &&
+        data.detailsJson is string && data.detailsJson.size() <= 20000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidWhatIfScenario(data, eventId) {
+      return data.keys().hasAll(['ownerId', 'eventId', 'name', 'prompt', 'proposedBudget', 'proposedGuests', 'summary', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'eventId', 'name', 'prompt', 'proposedBudget', 'proposedGuests', 'summary', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.eventId is string && data.eventId.size() >= 1 && data.eventId.size() <= 128 && data.eventId == eventId &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 140 &&
+        data.prompt is string && data.prompt.size() <= 500 &&
+        data.proposedBudget is number && data.proposedBudget >= 0 &&
+        data.proposedGuests is number && data.proposedGuests >= 0 &&
+        data.summary is string && data.summary.size() <= 3000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidNotificationItem(data, eventId) {
+      return data.keys().hasAll(['ownerId', 'eventId', 'title', 'message', 'read', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'eventId', 'title', 'message', 'read', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.eventId is string && data.eventId.size() >= 1 && data.eventId.size() <= 128 && data.eventId == eventId &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+        data.message is string && data.message.size() <= 600 &&
+        data.read is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidActivityItem(data, eventId) {
+      return data.keys().hasAll(['ownerId', 'eventId', 'actorName', 'action', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'eventId', 'actorName', 'action', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.eventId is string && data.eventId.size() >= 1 && data.eventId.size() <= 128 && data.eventId == eventId &&
+        data.actorName is string && data.actorName.size() >= 1 && data.actorName.size() <= 120 &&
+        data.action is string && data.action.size() >= 1 && data.action.size() <= 500 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // 1. User Profiles (Strict PII Isolation)
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(userId) && isValidUserProfile(incoming(), userId) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(userId) && isValidUserProfile(incoming(), userId) &&
+        existing().uid == request.auth.uid &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'email', 'currency', 'country', 'timezone', 'updatedAt']);
+      allow delete: if isVerifiedUser() && isValidId(userId) && existing().uid == request.auth.uid;
+
+      match /preferences/{prefId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(prefId) && request.auth.uid == userId && existing().ownerId == request.auth.uid;
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser() && isValidId(userId) && isValidId(prefId) && isValidUserPreference(incoming(), userId) &&
+          incoming().createdAt == request.time && incoming().updatedAt == request.time &&
+          exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isVerifiedUser() && isValidId(userId) && isValidId(prefId) && isValidUserPreference(incoming(), userId) &&
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['defaultStyle', 'reminderLeadDays', 'aiPrivacyConsent', 'updatedAt']) &&
+          exists(/databases/$(database)/documents/users/$(userId));
+        allow delete: if isVerifiedUser() && isValidId(userId) && isValidId(prefId) && existing().ownerId == request.auth.uid;
+      }
+    }
+
+    // 2. Events & Subcollections
+    match /events/{eventId} {
+      allow get: if isSignedIn() && isValidId(eventId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(eventId) && isValidEventRecord(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(eventId) && isValidEventRecord(incoming()) &&
+        existing().ownerId == request.auth.uid &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'eventType', 'status', 'eventDate', 'city', 'venueName',
+          'venueType', 'guestCount', 'totalBudget', 'currency', 'workspaceJson', 'updatedAt'
+        ]);
+      allow delete: if isVerifiedUser() && isValidId(eventId) && existing().ownerId == request.auth.uid;
+
+      // Subcollection: Tasks
+      match /tasks/{taskId} {
+        allow get: if isSignedIn() && isValidId(eventId) && isValidId(taskId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser() && isValidId(eventId) && isValidId(taskId) && isValidEventTask(incoming(), eventId) &&
+          incoming().createdAt == request.time && incoming().updatedAt == request.time && isParentEventOwner(eventId);
+        allow update: if isVerifiedUser() && isValidId(eventId) && isValidId(taskId) && isValidEventTask(incoming(), eventId) &&
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().eventId == existing().eventId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'dueDate', 'priority', 'status', 'estimatedCost', 'notes', 'updatedAt']) &&
+          isParentEventOwner(eventId);
+        allow delete: if isVerifiedUser() && isValidId(eventId) && isValidId(taskId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+      }
+
+      // Subcollection: Budget Items
+      match /budgetItems/{budgetItemId} {
+        allow get: if isSignedIn() && isValidId(eventId) && isValidId(budgetItemId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser() && isValidId(eventId) && isValidId(budgetItemId) && isValidBudgetItem(incoming(), eventId) &&
+          incoming().createdAt == request.time && incoming().updatedAt == request.time && isParentEventOwner(eventId);
+        allow update: if isVerifiedUser() && isValidId(eventId) && isValidId(budgetItemId) && isValidBudgetItem(incoming(), eventId) &&
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().eventId == existing().eventId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['category', 'plannedAmount', 'quotedAmount', 'actualAmount', 'paidAmount', 'vendorName', 'status', 'notes', 'updatedAt']) &&
+          isParentEventOwner(eventId);
+        allow delete: if isVerifiedUser() && isValidId(eventId) && isValidId(budgetItemId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+      }
+
+      // Subcollection: Vendors
+      match /vendors/{vendorId} {
+        allow get: if isSignedIn() && isValidId(eventId) && isValidId(vendorId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser() && isValidId(eventId) && isValidId(vendorId) && isValidVendorRecord(incoming(), eventId) &&
+          incoming().createdAt == request.time && incoming().updatedAt == request.time && isParentEventOwner(eventId);
+        allow update: if isVerifiedUser() && isValidId(eventId) && isValidId(vendorId) && isValidVendorRecord(incoming(), eventId) &&
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().eventId == existing().eventId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['businessName', 'category', 'contactPerson', 'phone', 'email', 'quotedAmount', 'finalPrice', 'advancePaid', 'bookingStatus', 'notes', 'updatedAt']) &&
+          isParentEventOwner(eventId);
+        allow delete: if isVerifiedUser() && isValidId(eventId) && isValidId(vendorId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+      }
+
+      // Subcollection: Guests (PII Isolated to Owner)
+      match /guests/{guestId} {
+        allow get: if isSignedIn() && isValidId(eventId) && isValidId(guestId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser() && isValidId(eventId) && isValidId(guestId) && isValidGuestRecord(incoming(), eventId) &&
+          incoming().createdAt == request.time && incoming().updatedAt == request.time && isParentEventOwner(eventId);
+        allow update: if isVerifiedUser() && isValidId(eventId) && isValidId(guestId) && isValidGuestRecord(incoming(), eventId) &&
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().eventId == existing().eventId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'household', 'contact', 'rsvpStatus', 'attendeeCount', 'mealPreference', 'dietaryNotes', 'seatingGroup', 'updatedAt']) &&
+          isParentEventOwner(eventId);
+        allow delete: if isVerifiedUser() && isValidId(eventId) && isValidId(guestId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+      }
+
+      // Subcollection: Themes
+      match /themes/{themeId} {
+        allow get: if isSignedIn() && isValidId(eventId) && isValidId(themeId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser() && isValidId(eventId) && isValidId(themeId) && isValidThemeBoard(incoming(), eventId) &&
+          incoming().createdAt == request.time && incoming().updatedAt == request.time && isParentEventOwner(eventId);
+        allow update: if isVerifiedUser() && isValidId(eventId) && isValidId(themeId) && isValidThemeBoard(incoming(), eventId) &&
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().eventId == existing().eventId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'styleCategory', 'description', 'detailsJson', 'updatedAt']) &&
+          isParentEventOwner(eventId);
+        allow delete: if isVerifiedUser() && isValidId(eventId) && isValidId(themeId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+      }
+
+      // Subcollection: Scenarios
+      match /scenarios/{scenarioId} {
+        allow get: if isSignedIn() && isValidId(eventId) && isValidId(scenarioId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser() && isValidId(eventId) && isValidId(scenarioId) && isValidWhatIfScenario(incoming(), eventId) &&
+          incoming().createdAt == request.time && incoming().updatedAt == request.time && isParentEventOwner(eventId);
+        allow update: if isVerifiedUser() && isValidId(eventId) && isValidId(scenarioId) && isValidWhatIfScenario(incoming(), eventId) &&
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().eventId == existing().eventId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'prompt', 'proposedBudget', 'proposedGuests', 'summary', 'updatedAt']) &&
+          isParentEventOwner(eventId);
+        allow delete: if isVerifiedUser() && isValidId(eventId) && isValidId(scenarioId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+      }
+
+      // Subcollection: Notifications
+      match /notifications/{notificationId} {
+        allow get: if isSignedIn() && isValidId(eventId) && isValidId(notificationId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser() && isValidId(eventId) && isValidId(notificationId) && isValidNotificationItem(incoming(), eventId) &&
+          incoming().createdAt == request.time && incoming().updatedAt == request.time && isParentEventOwner(eventId);
+        allow update: if isVerifiedUser() && isValidId(eventId) && isValidId(notificationId) && isValidNotificationItem(incoming(), eventId) &&
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().eventId == existing().eventId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'message', 'read', 'updatedAt']) &&
+          isParentEventOwner(eventId);
+        allow delete: if isVerifiedUser() && isValidId(eventId) && isValidId(notificationId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+      }
+
+      // Subcollection: Activity
+      match /activity/{activityId} {
+        allow get: if isSignedIn() && isValidId(eventId) && isValidId(activityId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser() && isValidId(eventId) && isValidId(activityId) && isValidActivityItem(incoming(), eventId) &&
+          incoming().createdAt == request.time && incoming().updatedAt == request.time && isParentEventOwner(eventId);
+        allow update: if isVerifiedUser() && isValidId(eventId) && isValidId(activityId) && isValidActivityItem(incoming(), eventId) &&
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().eventId == existing().eventId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['actorName', 'action', 'updatedAt']) &&
+          isParentEventOwner(eventId);
+        allow delete: if isVerifiedUser() && isValidId(eventId) && isValidId(activityId) && existing().ownerId == request.auth.uid && isParentEventOwner(eventId);
+      }
+    }
+  }
+}

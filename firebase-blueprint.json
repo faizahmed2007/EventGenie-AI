@@ -1,0 +1,260 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private user profile and regional preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "email": { "type": "string", "minLength": 3, "maxLength": 254 },
+        "currency": { "type": "string", "enum": ["INR", "USD", "EUR", "GBP", "AED", "SGD"] },
+        "country": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "timezone": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email", "currency", "country", "timezone", "createdAt", "updatedAt"]
+    },
+    "UserPreference": {
+      "title": "UserPreference",
+      "description": "User planning style and notification settings",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "defaultStyle": { "type": "string", "maxLength": 60 },
+        "reminderLeadDays": { "type": "number" },
+        "aiPrivacyConsent": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "defaultStyle", "reminderLeadDays", "aiPrivacyConsent", "createdAt", "updatedAt"]
+    },
+    "EventRecord": {
+      "title": "EventRecord",
+      "description": "Primary celebration or event record with serialized workspace state",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "eventType": { "type": "string", "maxLength": 60 },
+        "status": { "type": "string", "enum": ["Planning", "In Progress", "Ready", "Completed", "Archived"] },
+        "eventDate": { "type": "string", "maxLength": 40 },
+        "city": { "type": "string", "maxLength": 120 },
+        "venueName": { "type": "string", "maxLength": 160 },
+        "venueType": { "type": "string", "enum": ["Indoor", "Outdoor", "Hybrid"] },
+        "guestCount": { "type": "number" },
+        "totalBudget": { "type": "number" },
+        "currency": { "type": "string", "enum": ["INR", "USD", "EUR", "GBP", "AED", "SGD"] },
+        "workspaceJson": { "type": "string", "maxLength": 450000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "eventType",
+        "status",
+        "eventDate",
+        "city",
+        "venueName",
+        "venueType",
+        "guestCount",
+        "totalBudget",
+        "currency",
+        "workspaceJson",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "EventTask": {
+      "title": "EventTask",
+      "description": "Timeline task belonging to an event",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "category": { "type": "string", "maxLength": 80 },
+        "dueDate": { "type": "string", "maxLength": 40 },
+        "priority": { "type": "string", "enum": ["High", "Medium", "Low"] },
+        "status": { "type": "string", "enum": ["Not Started", "In Progress", "Completed", "Blocked", "Cancelled"] },
+        "estimatedCost": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "eventId", "title", "category", "dueDate", "priority", "status", "estimatedCost", "notes", "createdAt", "updatedAt"]
+    },
+    "BudgetItem": {
+      "title": "BudgetItem",
+      "description": "Budget category allocation and expense item",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "category": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "plannedAmount": { "type": "number" },
+        "quotedAmount": { "type": "number" },
+        "actualAmount": { "type": "number" },
+        "paidAmount": { "type": "number" },
+        "vendorName": { "type": "string", "maxLength": 160 },
+        "status": { "type": "string", "enum": ["Estimated", "Quoted", "Confirmed", "Paid", "Overdue"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "eventId", "category", "plannedAmount", "quotedAmount", "actualAmount", "paidAmount", "vendorName", "status", "notes", "createdAt", "updatedAt"]
+    },
+    "VendorRecord": {
+      "title": "VendorRecord",
+      "description": "Vendor directory and quotation entry",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "category": { "type": "string", "maxLength": 80 },
+        "contactPerson": { "type": "string", "maxLength": 120 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "email": { "type": "string", "maxLength": 254 },
+        "quotedAmount": { "type": "number" },
+        "finalPrice": { "type": "number" },
+        "advancePaid": { "type": "number" },
+        "bookingStatus": { "type": "string", "enum": ["Researching", "Contacted", "Quote Received", "Negotiating", "Shortlisted", "Booked", "Completed", "Rejected"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "eventId", "businessName", "category", "contactPerson", "phone", "email", "quotedAmount", "finalPrice", "advancePaid", "bookingStatus", "notes", "createdAt", "updatedAt"]
+    },
+    "GuestRecord": {
+      "title": "GuestRecord",
+      "description": "Private guest and RSVP entry",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fullName": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "household": { "type": "string", "maxLength": 120 },
+        "contact": { "type": "string", "maxLength": 160 },
+        "rsvpStatus": { "type": "string", "enum": ["Not Invited", "Invited", "Pending", "Accepted", "Declined", "Waitlisted"] },
+        "attendeeCount": { "type": "number" },
+        "mealPreference": { "type": "string", "maxLength": 80 },
+        "dietaryNotes": { "type": "string", "maxLength": 500 },
+        "seatingGroup": { "type": "string", "maxLength": 80 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "eventId", "fullName", "household", "contact", "rsvpStatus", "attendeeCount", "mealPreference", "dietaryNotes", "seatingGroup", "createdAt", "updatedAt"]
+    },
+    "ThemeBoard": {
+      "title": "ThemeBoard",
+      "description": "Visual theme and moodboard concept",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "styleCategory": { "type": "string", "enum": ["Traditional", "Modern", "Minimalist", "Luxury", "Rustic", "Floral", "Sustainable", "Custom"] },
+        "description": { "type": "string", "maxLength": 2000 },
+        "detailsJson": { "type": "string", "maxLength": 20000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "eventId", "title", "styleCategory", "description", "detailsJson", "createdAt", "updatedAt"]
+    },
+    "WhatIfScenario": {
+      "title": "WhatIfScenario",
+      "description": "What-If event simulation scenario",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "prompt": { "type": "string", "maxLength": 500 },
+        "proposedBudget": { "type": "number" },
+        "proposedGuests": { "type": "number" },
+        "summary": { "type": "string", "maxLength": 3000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "eventId", "name", "prompt", "proposedBudget", "proposedGuests", "summary", "createdAt", "updatedAt"]
+    },
+    "NotificationItem": {
+      "title": "NotificationItem",
+      "description": "In-app reminder or alert notification",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "message": { "type": "string", "maxLength": 600 },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "eventId", "title", "message", "read", "createdAt", "updatedAt"]
+    },
+    "ActivityItem": {
+      "title": "ActivityItem",
+      "description": "Audit log and team activity item",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "actorName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "action": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "eventId", "actorName", "action", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user account profiles"
+    },
+    "/users/{userId}/preferences/{prefId}": {
+      "schema": { "$ref": "#/entities/UserPreference" },
+      "description": "User planning preferences"
+    },
+    "/events/{eventId}": {
+      "schema": { "$ref": "#/entities/EventRecord" },
+      "description": "Main event records owned by users"
+    },
+    "/events/{eventId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/EventTask" },
+      "description": "Event timeline tasks"
+    },
+    "/events/{eventId}/budgetItems/{budgetItemId}": {
+      "schema": { "$ref": "#/entities/BudgetItem" },
+      "description": "Event budget line items"
+    },
+    "/events/{eventId}/vendors/{vendorId}": {
+      "schema": { "$ref": "#/entities/VendorRecord" },
+      "description": "Event vendors and quotes"
+    },
+    "/events/{eventId}/guests/{guestId}": {
+      "schema": { "$ref": "#/entities/GuestRecord" },
+      "description": "Private event guest list and RSVPs"
+    },
+    "/events/{eventId}/themes/{themeId}": {
+      "schema": { "$ref": "#/entities/ThemeBoard" },
+      "description": "Saved visual themes for an event"
+    },
+    "/events/{eventId}/scenarios/{scenarioId}": {
+      "schema": { "$ref": "#/entities/WhatIfScenario" },
+      "description": "Saved What-If simulation scenarios"
+    },
+    "/events/{eventId}/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/NotificationItem" },
+      "description": "Event reminders and notifications"
+    },
+    "/events/{eventId}/activity/{activityId}": {
+      "schema": { "$ref": "#/entities/ActivityItem" },
+      "description": "Event activity log"
+    }
+  }
+}
